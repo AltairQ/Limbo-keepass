@@ -26,10 +26,31 @@ namespace Limbo
     {
         private IPluginHost m_host = null;
 
+        private string[,] graph_config;
+
+        public override void Terminate()
+        {
+            m_host.CustomConfig.SetString("LMB_CONFIG", JsonConvert.SerializeObject(graph_config));
+        }
+
         public override bool Initialize(IPluginHost host)
         {
             if (host == null) return false;
             m_host = host;
+
+            var old_g_c = m_host.CustomConfig.GetString("LMB_CONFIG", "[]");
+
+            MessageService.ShowInfo(old_g_c);
+
+            try
+            {
+                graph_config = JsonConvert.DeserializeObject<string[,]>(old_g_c);
+            }
+            catch(Exception e)
+            {
+                MessageService.ShowFatal(e);
+            }
+
             return true;
         }
 
@@ -91,7 +112,7 @@ namespace Limbo
 
                 if (string.IsNullOrEmpty(ex_tag))
                 {
-                    ex_tag = "LMB_" + CreateString(6);
+                    ex_tag = "LMB_N" + CreateString(6);
                     entry.AddTag(ex_tag);
                 }
 
@@ -107,8 +128,15 @@ namespace Limbo
 
                 lst.Add(entry_dict);
             }
+
+            var fin = new Dictionary<string, object>
+            {
+                {"edges", JsonConvert.SerializeObject(graph_config)},
+                {"nodes", JsonConvert.SerializeObject(lst)}
             
-            var outs = JsonConvert.SerializeObject(lst);
+            };
+
+            var outs = JsonConvert.SerializeObject(fin);
 
             MessageService.ShowInfo(outs);
 
