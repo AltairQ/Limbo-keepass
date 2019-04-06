@@ -33,6 +33,33 @@ namespace Limbo
             return true;
         }
 
+
+        static Random rd = new Random();
+        internal static string CreateString(int stringLength)
+        {
+            const string allowedChars = "ABCDEFGHJKLMNOPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789";
+            char[] chars = new char[stringLength];
+
+            for (int i = 0; i < stringLength; i++)
+            {
+                chars[i] = allowedChars[rd.Next(0, allowedChars.Length)];
+            }
+
+            return new string(chars);
+        }
+
+
+
+        internal static string ExtractLmbTag(List<string> lst)
+        {
+            foreach (var tag in lst)
+                if (tag.StartsWith("LMB_", StringComparison.Ordinal))
+                    return tag;
+
+            return null;
+        }
+                   
+
         public override ToolStripMenuItem GetMenuItem(PluginMenuType t)
         {
             if (t != PluginMenuType.Main) return null;
@@ -60,6 +87,15 @@ namespace Limbo
 
             foreach (var entry in entries)
             {
+                var ex_tag = ExtractLmbTag(entry.Tags);
+
+                if (string.IsNullOrEmpty(ex_tag))
+                {
+                    ex_tag = "LMB_" + CreateString(6);
+                    entry.AddTag(ex_tag);
+                }
+
+
                 Dictionary<string, string> entry_dict = new Dictionary<string, string>();
                 entry_dict.Add("username", entry.Strings.ReadSafe(PwDefs.UserNameField));
 
@@ -67,6 +103,7 @@ namespace Limbo
 
                 entry_dict.Add("pass_sha1", passwordHash);
                 entry_dict.Add("url", entry.Strings.ReadSafe(PwDefs.UrlField));
+                entry_dict.Add("tag", ex_tag);
 
                 lst.Add(entry_dict);
             }
