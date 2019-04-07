@@ -33,6 +33,21 @@ namespace Limbo
             m_host.CustomConfig.SetString("LMB_CONFIG", JsonConvert.SerializeObject(graph_config));
         }
 
+        public bool IsDeleted(PwEntry entry)
+        {
+            var RecycleBinUuid = m_host.Database.RecycleBinUuid;
+            var currentGroup = entry.ParentGroup;
+            while (currentGroup != null)
+            {
+                if (currentGroup.Uuid.CompareTo(RecycleBinUuid) == 0)
+                {
+                    return true;
+                }
+                currentGroup = currentGroup.ParentGroup;
+            }
+            return false;
+        }
+
         public override bool Initialize(IPluginHost host)
         {
             if (host == null) return false;
@@ -108,6 +123,10 @@ namespace Limbo
 
             foreach (var entry in entries)
             {
+                if (entry.Expires || IsDeleted(entry))
+                    continue;
+
+
                 var ex_tag = ExtractLmbTag(entry.Tags);
 
                 if (string.IsNullOrEmpty(ex_tag))
@@ -125,14 +144,16 @@ namespace Limbo
                 entry_dict.Add("pass_sha1", passwordHash);
                 entry_dict.Add("url", entry.Strings.ReadSafe(PwDefs.UrlField));
                 entry_dict.Add("tag", ex_tag);
+                entry_dict.Add("creation_date", entry.LastModificationTime.ToString("yyyy-MM-ddTHH\\:mm\\:ss.fffffffzzz"));
+                entry_dict.Add("notes", entry.Strings.ReadSafe(PwDefs.NotesField));
 
                 lst.Add(entry_dict);
             }
 
             var fin = new Dictionary<string, object>
             {
-                {"edges", JsonConvert.SerializeObject(graph_config)},
-                {"nodes", JsonConvert.SerializeObject(lst)}
+                {"edges", graph_config},
+                {"nodes", lst}
             
             };
 
