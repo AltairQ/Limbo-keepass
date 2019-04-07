@@ -159,8 +159,11 @@ namespace Limbo
 
             var outs = JsonConvert.SerializeObject(fin);
 
-            MessageService.ShowInfo(outs);
+            //MessageService.ShowInfo(outs);
 
+            Process.Start("C:\\Users\\cineq\\repos\\fb-limbo\\limbo-win32-x64\\limbo.exe");
+
+            System.Threading.Thread.Sleep(500);
             SockSend(outs);
 
         }
